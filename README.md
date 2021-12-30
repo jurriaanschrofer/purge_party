@@ -1,6 +1,6 @@
 # Purge Party
 
-## Delete all unused imports from your project's javascript files!
+Delete all unused imports from your project's javascript files!
 
 Simply
   1. download the repo
