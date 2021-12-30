@@ -1,10 +1,12 @@
-require "pry"
-
 # Script settings, adjust to your preferences.
 
 DebugMode               = false
 DebugHaltExecution      = false
 IncludeNonDeletables    = false
+
+# Only require pry if necessary, so that all folks without pry may still
+# use this beautiful script ;).
+require "pry" if DebugMode
 
 # Regular expression, tweak as desired. Alternatives are commented.
 
@@ -13,7 +15,6 @@ FileImports             = /import.*$/              # /import[ {}a-zA-Z'"\t\/_,-.
 FileImportCriterium     = /(?<=import).*(?=from)/
 ImportConstantsBlock    = /(?<=import ).*(?=from)/ # /(?<=import )[a-zA-Z0-9 ,{}_*]{1,}(?=from)/
 ImportCOnstantsSplitter = /[{},]/
-
 
 # The runner methods merely exist as the skeleton that invokes all helper
 # methods which do the actual work.
