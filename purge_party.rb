@@ -207,3 +207,19 @@ end
 # Invocation
 
 run
+
+=begin
+
+Philosophy
+
+1. use constants as tweakable settings
+2. isolate debugger methods: present yet not obfuscating logic
+3. method compartmentalisation:
+    1. runner methods (set up according to UX perspective; in this case per relational object)
+    2. helper methods (actual logic; called by runner methods)
+    3. debugger methods (optionally performed, decided by settings; called by helper methods)
+    4. invocation methods (EOF; calls all runner methods required to perform the script)
+4. deleting is a dangerous operation: report to be deleted lines and ask for confirmation
+5. conditional imports: only require libraries if needed
+
+=end
