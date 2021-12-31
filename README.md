@@ -9,5 +9,4 @@ Simply
   3. invoke the script (effectively calling `run`), through `ruby purge_party.rb`
 
 Note
-  1. currently displays all lines which may be deleted, but does not delete them yet
-  2. as for now, requires ruby 3+ (but you can easily reverse engineer the file by substituting _1's & _2's with named arguments)
+  1. as for now, requires ruby 3+ (but you can easily reverse engineer the file by substituting _1's & _2's with named arguments)
