@@ -40,13 +40,13 @@ def process_import(line_no, import_line, file_contents)
   block         = import_constants_block(import_line)
   constants     = import_constants(block)
   skip_deletion = !!(block =~ FileImportExclusion)
-  invocations   = constants.map { constant_occurences(_1, file_contents) }.inject(&:merge) || {}
+  invocations   = constants.map { process_constants(_1, file_contents) }.inject(&:merge) || {}
   deletable     = skip_deletion ? false : (invocations.values.any? && invocations.values.all?(0))
 
   { line_no => { deletable: deletable, invocations: invocations } }
 end
 
-def constant_occurences(constant, file_contents)
+def process_constants(constant, file_contents)
   regex      = Regexp.new("(?<![a-zA-Z])#{constant}(?![a-zA-Z])")
   occurences = file_contents.scan(regex).count
   { constant => occurences }
