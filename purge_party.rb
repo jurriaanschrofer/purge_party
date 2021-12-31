@@ -21,10 +21,9 @@ FileImportExclusion     = /\* {1,}as {1,}/
 
 def run
   index = files_index.map { process_file(_1) }
-  return unless proceed_to_delete?
+  return unless proceed_to_delete?(count_deletables(index))
   delete_lines_from_files(index)
 end
-
 
 def process_file(file_path)
   contents          = file_contents_without_imports(file_path)
@@ -122,8 +121,8 @@ def print_deletables(file_info, deletables_index)
   EOL
 end
 
-def proceed_to_delete?
-  puts "Do you want to proceed deleting above stated lines? (y/n)"
+def proceed_to_delete?(deletables_count)
+  puts "Do you want to proceed deleting above stated #{deletables_count} lines? (y/n)"
   answer  = gets
   proceed = answer.strip == "y"
   if proceed
@@ -141,6 +140,14 @@ def delete_lines_from_files(index)
      f << file_info[:new_file_contents]
    end
   end
+end
+
+def count_deletables(index)
+  count_per_file = index.map do |file_info|
+    next unless file_info[:file_changes_present]
+    file_info[:imports].count { _2[:deletable] }
+  end
+  count_per_file.compact.sum
 end
 
 # Debuggers are separated from the code, in order to allow the core code
