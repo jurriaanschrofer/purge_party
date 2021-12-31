@@ -13,7 +13,7 @@ FilePaths               = /.*.js$/
 FileImports             = /(?<![a-zA-Z ]{3})import.*$/ # /import[ {}a-zA-Z'"\t\/_,-.0-9@]{1,}$/
 FileImportCriterium     = /(?<=import).*(?=from)/
 ImportConstantsBlock    = /(?<=import).*(?=from)/      # /(?<=import )[a-zA-Z0-9 ,{}_*]{1,}(?=from)/
-ImportCOnstantsSplitter = /[{},]/
+ImportCOnstantsSplitter = /[{},]|[a-zA-Z]{1,} as/
 FileImportExclusion     = /\* {1,}as {1,}/
 
 # The runner methods merely exist as the skeleton that invokes all helper
