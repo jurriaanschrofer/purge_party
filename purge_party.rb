@@ -5,7 +5,7 @@ DebugHaltExecution      = false
 
 # Only require pry if necessary, so that all folks without pry may still
 # use this beautiful script ;).
-require "pry" #if DebugMode
+require "pry" if DebugMode
 
 # Regular expression, tweak as desired. Alternatives are commented.
 
