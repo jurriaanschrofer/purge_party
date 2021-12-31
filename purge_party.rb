@@ -2,7 +2,6 @@
 
 DebugMode               = false
 DebugHaltExecution      = false
-IncludeNonDeletables    = false
 
 # Only require pry if necessary, so that all folks without pry may still
 # use this beautiful script ;).
@@ -13,7 +12,7 @@ require "pry" if DebugMode
 FilePaths               = /.*.js$/
 FileImports             = /import.*$/              # /import[ {}a-zA-Z'"\t\/_,-.0-9@]{1,}$/
 FileImportCriterium     = /(?<=import).*(?=from)/
-ImportConstantsBlock    = /(?<=import ).*(?=from)/ # /(?<=import )[a-zA-Z0-9 ,{}_*]{1,}(?=from)/
+ImportConstantsBlock    = /(?<=import).*(?=from)/  # /(?<=import )[a-zA-Z0-9 ,{}_*]{1,}(?=from)/
 ImportCOnstantsSplitter = /[{},]/
 
 # The runner methods merely exist as the skeleton that invokes all helper
@@ -21,17 +20,20 @@ ImportCOnstantsSplitter = /[{},]/
 
 def run
   index = files_index.map { process_file(_1) }
-  index.select! { _1[:imports].any? } if !IncludeNonDeletables
-  puts index
+  return unless proceed_to_delete?
+  delete_lines_from_files(index)
 end
 
-def process_file(file_path)
-  contents        = file_contents_without_imports(file_path)
-  imports         = file_imports_index(file_path)
-  import_trackers = imports.map { process_import(*_1, contents) }.inject(&:merge) || {}
 
-  import_trackers.select! { _2[:deletable] } unless IncludeNonDeletables
-  { file: file_path, imports: import_trackers }
+def process_file(file_path)
+  contents          = file_contents_without_imports(file_path)
+  imports           = file_imports_index(file_path)
+  import_trackers   = imports.map { process_import(*_1, contents) }.inject(&:merge) || {}
+  file_lines_index  = file_lines_index(file_path)
+  file_info         = { file: file_path, imports: import_trackers, file_lines_index: file_lines_index }
+  new_file_contents = parse_new_file_contents(file_info)
+
+  file_info.merge!(new_file_contents)
 end
 
 def process_import(line_no, import_line, file_contents)
@@ -87,6 +89,55 @@ def import_constants(constants_block)
   constants = constants.map { _1.strip }.select { !_1.empty? }
   debug(__method__, constants_block, constants)
   constants
+end
+
+def parse_new_file_contents(file_info)
+  deletable_linenos    = select_delatables(file_info)
+  file_changes_present = deletable_linenos.any?
+  filtered_index       = file_info[:file_lines_index].select { !deletable_linenos.include?(_1) }
+  parsed_contents      = filtered_index.values.join("\n")
+
+  { file_changes_present: file_changes_present, new_file_contents: parsed_contents}
+end
+
+def select_delatables(file_info)
+  deletables_index = file_info[:imports].select { _2[:deletable] }
+  print_deletables(file_info, deletables_index)
+  deletable_linenos = deletables_index.keys
+end
+
+def print_deletables(file_info, deletables_index)
+  return unless deletables_index.any?
+  file_name       = file_info[:file]
+  formatted_lines = deletables_index.map { "#{_1[0].to_s.ljust(5)}#{file_info.dig(:file_lines_index, _1[0])}" }
+  parsed_lines    = formatted_lines.join("\n")
+  puts <<~EOL
+
+  To be deleted from file: #{file_name}
+  #{parsed_lines}
+
+  EOL
+end
+
+def proceed_to_delete?
+  puts "Do you want to proceed deleting above stated lines? (y/n)"
+  answer  = gets
+  proceed = answer.strip == "y"
+  if proceed
+    puts "proceeding to delete unused import lines form your project..."
+  else
+    puts "aborting operation..."
+  end
+  proceed
+end
+
+def delete_lines_from_files(index)
+  index.each do |file_info|
+    next unless file_info[:file_changes_present]
+    File.open(file_info[:file], "w+") do |f|
+     f << file_info[:new_file_contents]
+   end
+  end
 end
 
 # Debuggers are separated from the code, in order to allow the core code
