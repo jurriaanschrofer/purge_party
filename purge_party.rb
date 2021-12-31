@@ -5,15 +5,16 @@ DebugHaltExecution      = false
 
 # Only require pry if necessary, so that all folks without pry may still
 # use this beautiful script ;).
-require "pry" if DebugMode
+require "pry" #if DebugMode
 
 # Regular expression, tweak as desired. Alternatives are commented.
 
 FilePaths               = /.*.js$/
-FileImports             = /import.*$/              # /import[ {}a-zA-Z'"\t\/_,-.0-9@]{1,}$/
+FileImports             = /(?<![a-zA-Z ]{3})import.*$/ # /import[ {}a-zA-Z'"\t\/_,-.0-9@]{1,}$/
 FileImportCriterium     = /(?<=import).*(?=from)/
-ImportConstantsBlock    = /(?<=import).*(?=from)/  # /(?<=import )[a-zA-Z0-9 ,{}_*]{1,}(?=from)/
+ImportConstantsBlock    = /(?<=import).*(?=from)/      # /(?<=import )[a-zA-Z0-9 ,{}_*]{1,}(?=from)/
 ImportCOnstantsSplitter = /[{},]/
+FileImportExclusion     = /\* {1,}as {1,}/
 
 # The runner methods merely exist as the skeleton that invokes all helper
 # methods which do the actual work.
@@ -37,11 +38,13 @@ def process_file(file_path)
 end
 
 def process_import(line_no, import_line, file_contents)
-  block       = import_constants_block(import_line)
-  constants   = import_constants(block)
-  invocations = constants.map { constant_occurences(_1, file_contents) }.inject(&:merge) || {}
-  deletable   = invocations.values.any? && invocations.values.all?(0)
-  analysis    = { line_no => { deletable: deletable, invocations: invocations } }
+  block         = import_constants_block(import_line)
+  constants     = import_constants(block)
+  skip_deletion = !!(block =~ FileImportExclusion)
+  invocations   = constants.map { constant_occurences(_1, file_contents) }.inject(&:merge) || {}
+  deletable     = skip_deletion ? false : (invocations.values.any? && invocations.values.all?(0))
+
+  { line_no => { deletable: deletable, invocations: invocations } }
 end
 
 def constant_occurences(constant, file_contents)
